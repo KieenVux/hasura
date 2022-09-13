@@ -1,0 +1,79 @@
+version: '3.6'
+services:
+  postgres:
+    image: postgres:14.2
+    restart: always
+    volumes:
+    - db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: postgres
+    networks:
+      - authen
+
+  graphql-engine:
+    image: hasura/graphql-engine:v2.1.1
+    ports:
+    - "8080:8080"
+    depends_on:
+    - "postgres"
+    restart: always
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/postgres
+      # PG_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/postgres
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true" # set to "false" to disable console
+      HASURA_GRAPHQL_ADMIN_SECRET: myadminsecretkey
+      HASURA_GRAPHQL_AUTH_HOOK: http://auth:3000
+      # HASURA_GRAPHQL_JWT_SECRET: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwfhb1vwfFyp9+eZiiSRF1bECKOrndTA9QZmhUDKSCAzA+0vAv3f+KpJHIZaj9iTLsFKQoZNVEVUpBE3mCCaLRclzRrmbKqSKP6WV1BiHIVYrborPl1RnVsowAKU8b/1p30MSvHzfrTq24qPNYbepAlNgek3d8rMfulRuSVTL7URwMjil909/EwwqaBgogcQq+SvjyYieonHaQLyXrdL+GHZtSMPRdVxpAKEpjKakEwxPAJzlVnCd99mwRtUY5iw4+xWBe5fWGpGF7aXPQrFIHMSyCYnJagakrQ29O9hzOjFZzDPMx9IEcF+PBxhYeFfE7LZ0EhAQDffjRbeLxJSI7wIDAQAB
+    networks:
+      - authen
+
+  auth:
+    image: httpsomkar/keycloak-hasura-connector:latest
+    environment:
+      KEYCLOAK_USERNAME: admin
+      KEYCLOAK_PASSWORD: admin
+      KEYCLOAK_CLIENT_ID: client # Keycloak backend client id from the keycloak setup.
+      KEYCLOAK_SERVER_URL: http://key-cloak:9000/auth # Keycloak url in term of http://keycloak.COMPANY.com/auth
+      KEYCLOAK_REALM: master # Default to master if any new create change to it
+      KEYCLOAK_SECRET: 25762f23-fd3a-45de-a821-3e02e861b6e0 # Secret copied from the backend client -> Credentials
+      ANONYMOUS_ROLE: anonymous # (optional) Use this variable to set anonymous role name for unauthorized users as shown in the documentation: https://docs.hasura.io/1.0/graphql/manual/auth/authorization/common-roles-auth-examples.html#anonymous-not-logged-in-users
+      USER_ID_FIELD: 'sub' #The name of the token field that will be mapped to X-Hasura-User-Id
+      KEYCLOAK_DEBUG: 'true' # If testing enable mention this file
+    networks:
+      - authen
+
+  keycloak-db:
+    image: postgres:14.2
+    restart: always
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: password
+    volumes:
+    - keycloak-db:/var/lib/postgresql/data
+    networks:
+      - authen
+
+  key-cloak:
+    image: jboss/keycloak:14.0.0
+    ports:
+      - "9000:8080"
+    depends_on:
+      - keycloak-db
+    environment:
+      DB_VENDOR: postgres
+      DB_ADDR: keycloak-db
+      DB_DATABASE: keycloak
+      DB_USER: keycloak
+      DB_PASSWORD: password
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin
+    networks:
+      - authen
+
+networks:
+  authen:
+volumes:
+  db_data:
+  keycloak-db:

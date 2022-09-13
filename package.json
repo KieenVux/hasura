@@ -1,0 +1,16 @@
+{
+  "name": "hasura",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "console": "cd hasura && hasura console",
+    "migrate": "cd hasura && hasura migrate apply && hasura metadata apply"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "hasura-cli": "^2.0.1"
+  }
+}
