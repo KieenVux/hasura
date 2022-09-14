@@ -4,7 +4,7 @@ services:
     image: postgres:14.2
     restart: always
     volumes:
-    - db_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: postgrespassword
       POSTGRES_DB: postgres
@@ -12,11 +12,11 @@ services:
       - authen
 
   graphql-engine:
-    image: hasura/graphql-engine:v2.1.1
+    image: hasura/graphql-engine:v2.0.1
     ports:
-    - "8080:8080"
+      - "8080:8080"
     depends_on:
-    - "postgres"
+      - "postgres"
     restart: always
     environment:
       HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/postgres
@@ -30,47 +30,48 @@ services:
 
   auth:
     image: httpsomkar/keycloak-hasura-connector:latest
+    restart: always
     environment:
       KEYCLOAK_USERNAME: admin
       KEYCLOAK_PASSWORD: admin
-      KEYCLOAK_CLIENT_ID: client # Keycloak backend client id from the keycloak setup.
-      KEYCLOAK_SERVER_URL: http://key-cloak:9000/auth # Keycloak url in term of http://keycloak.COMPANY.com/auth
+      KEYCLOAK_CLIENT_ID: backend # Keycloak backend client id from the keycloak setup.
+      KEYCLOAK_SERVER_URL: http://18.138.38.113:8081/auth # Keycloak url in term of http://keycloak.COMPANY.com/auth
       KEYCLOAK_REALM: master # Default to master if any new create change to it
-      KEYCLOAK_SECRET: 25762f23-fd3a-45de-a821-3e02e861b6e0 # Secret copied from the backend client -> Credentials
+      KEYCLOAK_SECRET: 14118c7d-09c0-4e96-a25e-ef17262ea621 # Secret copied from the backend client -> Credentials
       ANONYMOUS_ROLE: anonymous # (optional) Use this variable to set anonymous role name for unauthorized users as shown in the documentation: https://docs.hasura.io/1.0/graphql/manual/auth/authorization/common-roles-auth-examples.html#anonymous-not-logged-in-users
       USER_ID_FIELD: 'sub' #The name of the token field that will be mapped to X-Hasura-User-Id
       KEYCLOAK_DEBUG: 'true' # If testing enable mention this file
     networks:
       - authen
 
-  keycloak-db:
-    image: postgres:14.2
-    restart: always
-    environment:
-      POSTGRES_DB: keycloak
-      POSTGRES_USER: keycloak
-      POSTGRES_PASSWORD: password
-    volumes:
-    - keycloak-db:/var/lib/postgresql/data
-    networks:
-      - authen
+  # keycloak-db:
+  #   image: postgres:14.2
+  #   restart: always
+  #   environment:
+  #     POSTGRES_DB: postgres
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: password
+  #   volumes:
+  #     - keycloak-db:/var/lib/postgresql/data
+  #   networks:
+  #     - authen
 
-  key-cloak:
-    image: jboss/keycloak:14.0.0
-    ports:
-      - "9000:8080"
-    depends_on:
-      - keycloak-db
-    environment:
-      DB_VENDOR: postgres
-      DB_ADDR: keycloak-db
-      DB_DATABASE: keycloak
-      DB_USER: keycloak
-      DB_PASSWORD: password
-      KEYCLOAK_USER: admin
-      KEYCLOAK_PASSWORD: admin
-    networks:
-      - authen
+  # key-cloak:
+  #   image: jboss/keycloak:14.0.0
+  #   ports:
+  #     - "9000:8080"
+  #   depends_on:
+  #     - keycloak-db
+  #   environment:
+  #     DB_VENDOR: postgres
+  #     DB_ADDR: keycloak-db
+  #     DB_DATABASE: keycloak
+  #     DB_USER: keycloak
+  #     DB_PASSWORD: password
+  #     KEYCLOAK_USER: admin
+  #     KEYCLOAK_PASSWORD: admin
+  #   networks:
+  #     - authen
 
 networks:
   authen:
